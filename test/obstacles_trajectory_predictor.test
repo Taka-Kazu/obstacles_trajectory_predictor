@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <test pkg="obstacles_trajectory_predictor" type="obstacles_trajectory_predictor_test" test-name="obstacles_trajectory_predictor_test">
+    </test>
+
+</launch>
