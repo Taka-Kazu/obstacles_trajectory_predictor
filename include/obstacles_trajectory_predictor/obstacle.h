@@ -5,8 +5,6 @@
 
 #include <Eigen/Dense>
 
-#include "obstacles_trajectory_predictor/kf.h"
-
 class Obstacle
 {
 public:
@@ -14,14 +12,17 @@ public:
     Obstacle(const Obstacle&);
     Obstacle(const Eigen::Vector2d&);
 
+    Eigen::Vector4d get_next_state(const Eigen::Vector4d&, const Eigen::Vector2d&, double);
+    Eigen::Matrix4d get_jacobian_f(double);
+    Eigen::Matrix4d get_state_transition_noise_matrix(double);
     void update(const Eigen::Vector2d&);
     void predict(void);
     void predict(double);
+    void predict(const Eigen::Vector2d&, double);
     Eigen::Vector2d get_position(void);
     double calculate_likelihood(void);
 
-    Eigen::Vector2d position;
-    Eigen::Vector4d x;
+    Eigen::Vector4d x;// x, y, \dot{x}, \dot{y}
     Eigen::Matrix4d p;
     Eigen::Matrix<double, 2, 4> h;
     double likelihood;
@@ -31,8 +32,9 @@ public:
 private:
     void initialize(void);
 
+    double MASS;
+
     Eigen::Matrix2d r;
-    KalmanFilter kf;
     double last_time;
 };
 

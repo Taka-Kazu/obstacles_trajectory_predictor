@@ -29,10 +29,10 @@ Obstacle::Obstacle(const Eigen::Vector2d& position)
 
 void Obstacle::initialize(void)
 {
-    p << 1e1, 0.0, 0.0, 0.0,
-         0.0, 1e1, 0.0, 0.0,
-         0.0, 0.0, 1e1, 0.0,
-         0.0, 0.0, 0.0, 1e1;
+    p << 1e0, 0.0, 0.0, 0.0,
+         0.0, 1e0, 0.0, 0.0,
+         0.0, 0.0, 1e0, 0.0,
+         0.0, 0.0, 0.0, 1e0;
 
     h << 1.0, 0.0, 0.0, 0.0,
          0.0, 1.0, 0.0, 0.0;
@@ -45,6 +45,38 @@ void Obstacle::initialize(void)
     lifetime = 1;
     age = 0;
     not_observed_time = 0;
+    MASS = 60;
+}
+
+Eigen::Vector4d Obstacle::get_next_state(const Eigen::Vector4d& x0, const Eigen::Vector2d& force, double dt)
+{
+    Eigen::Vector4d x1 = Eigen::Vector4d::Zero();
+    Eigen::Vector2d acc = force / MASS;
+    x1.segment(0, 2) = x0.segment(0, 2) + x0.segment(2, 2) * dt + 0.5 * acc * dt * dt;
+    x1.segment(2, 2) = x0.segment(2, 2) + acc * dt;
+    return x1;
+}
+
+Eigen::Matrix4d Obstacle::get_jacobian_f(double dt)
+{
+    Eigen::Matrix4d jf;
+    jf << 1.0, 0.0,  dt, 0.0,
+          0.0, 1.0, 0.0,  dt,
+          0.0, 0.0, 1.0, 0.0,
+          0.0, 0.0, 0.0, 1.0;
+    return jf;
+}
+
+Eigen::Matrix4d Obstacle::get_state_transition_noise_matrix(double dt)
+{
+    double sigma_a = 0.1;
+    Eigen::Matrix<double, 4, 2> g;
+    g << dt * dt / 2.0,           0.0,
+                   0.0, dt * dt / 2.0,
+                    dt,           0.0,
+                   0.0,            dt;
+    Eigen::Matrix4d q = sigma_a * sigma_a * g * g.transpose();
+    return q;
 }
 
 Eigen::Vector2d Obstacle::get_position(void)
@@ -74,17 +106,7 @@ void Obstacle::predict(void)
     double current_time = ros::Time::now().toSec();
     double dt = current_time - last_time;
     last_time = current_time;
-    age += dt;
-    not_observed_time += dt;
-    // std::cout << "age: " << age << std::endl;
-    // std::cout << "not_observed_time: " << not_observed_time << std::endl;
-
-    Eigen::Matrix4d f = kf.get_f(dt);
-    x = f * x;
-    // std::cout << "X:\n" << x << std::endl;;
-    Eigen::Matrix4d q = kf.get_q(dt);
-    p = f * p * f.transpose() + q;
-    // std::cout << "P:\n" << p << std::endl;;
+    predict(dt);
 }
 
 void Obstacle::predict(double dt)
@@ -95,11 +117,28 @@ void Obstacle::predict(double dt)
     // std::cout << "age: " << age << std::endl;
     // std::cout << "not_observed_time: " << not_observed_time << std::endl;
 
-    Eigen::Matrix4d f = kf.get_f(dt);
-    x = f * x;
+    Eigen::Vector2d force = Eigen::Vector2d::Zero();
+    x = get_next_state(x, force, dt);
+    Eigen::Matrix4d jf = get_jacobian_f(dt);
     // std::cout << "X:\n" << x << std::endl;;
-    Eigen::Matrix4d q = kf.get_q(dt);
-    p = f * p * f.transpose() + q;
+    Eigen::Matrix4d q = get_state_transition_noise_matrix(dt);
+    p = jf * p * jf.transpose() + q;
+    // std::cout << "P:\n" << p << std::endl;;
+}
+
+void Obstacle::predict(const Eigen::Vector2d& force, double dt)
+{
+    // std::cout << "predict" << std::endl;
+    age += dt;
+    not_observed_time += dt;
+    // std::cout << "age: " << age << std::endl;
+    // std::cout << "not_observed_time: " << not_observed_time << std::endl;
+
+    x = get_next_state(x, force, dt);
+    Eigen::Matrix4d jf = get_jacobian_f(dt);
+    // std::cout << "X:\n" << x << std::endl;;
+    Eigen::Matrix4d q = get_state_transition_noise_matrix(dt);
+    p = jf * p * jf.transpose() + q;
     // std::cout << "P:\n" << p << std::endl;;
 }
 
