@@ -3,6 +3,7 @@
 #include <ros/ros.h>
 
 #include "obstacles_trajectory_predictor/obstacle.h"
+#include "obstacles_trajectory_predictor/social_force_model.h"
 
 TEST(TestSuite, test0)
 {
@@ -42,6 +43,24 @@ TEST(TestSuite, test2)
         std::cout << "i: " << i << "\nx\n" << o.x.transpose() << "\np:\n" << o.p << std::endl;
     }
     EXPECT_NEAR(0.0675, o.x(0), 0.001);
+}
+
+TEST(TestSuite, test3)
+{
+    SocialForceModel sfm;
+    std::vector<Obstacle> agents;
+    agents.push_back(Obstacle(Eigen::Vector2d(0, 0)));
+    agents.push_back(Obstacle(Eigen::Vector2d(0, 1)));
+    agents.push_back(Obstacle(Eigen::Vector2d(5, -1)));
+    sfm.set_agents_states(agents);
+    std::vector<Eigen::Vector2d> forces;
+    for(size_t i=0;i<agents.size();i++){
+        Eigen::Vector2d f = sfm.get_social_force(i);
+        std::cout << "f" << i << ": " << f.transpose() << std::endl;
+        forces.push_back(f);
+    }
+    EXPECT_GT(0, forces[0](1));
+    EXPECT_LT(0, forces[1](1));
 }
 
 int main(int argc, char** argv)

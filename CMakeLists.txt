@@ -200,6 +200,7 @@ if(CATKIN_ENABLE_TESTING)
         test/obstacles_trajectory_predictor_test.cpp
         src/obstacle.cpp
         src/kf.cpp
+        src/social_force_model.cpp
     )
     target_link_libraries(obstacles_trajectory_predictor_test
         ${catkin_LIBRARIES}

@@ -45,13 +45,14 @@ void Obstacle::initialize(void)
     lifetime = 1;
     age = 0;
     not_observed_time = 0;
-    MASS = 60;
+    mass = 60;
+    radius = 0.3;
 }
 
 Eigen::Vector4d Obstacle::get_next_state(const Eigen::Vector4d& x0, const Eigen::Vector2d& force, double dt)
 {
     Eigen::Vector4d x1 = Eigen::Vector4d::Zero();
-    Eigen::Vector2d acc = force / MASS;
+    Eigen::Vector2d acc = force / mass;
     x1.segment(0, 2) = x0.segment(0, 2) + x0.segment(2, 2) * dt + 0.5 * acc * dt * dt;
     x1.segment(2, 2) = x0.segment(2, 2) + acc * dt;
     return x1;
@@ -82,6 +83,11 @@ Eigen::Matrix4d Obstacle::get_state_transition_noise_matrix(double dt)
 Eigen::Vector2d Obstacle::get_position(void)
 {
     return x.segment(0, 2);
+}
+
+Eigen::Vector2d Obstacle::get_velocity(void)
+{
+    return x.segment(2, 2);
 }
 
 void Obstacle::update(const Eigen::Vector2d& z)

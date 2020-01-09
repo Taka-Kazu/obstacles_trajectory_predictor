@@ -20,6 +20,7 @@ public:
     void predict(double);
     void predict(const Eigen::Vector2d&, double);
     Eigen::Vector2d get_position(void);
+    Eigen::Vector2d get_velocity(void);
     double calculate_likelihood(void);
 
     Eigen::Vector4d x;// x, y, \dot{x}, \dot{y}
@@ -29,10 +30,11 @@ public:
     double lifetime;
     double age;
     double not_observed_time;
+    double mass;
+    double radius;
+
 private:
     void initialize(void);
-
-    double MASS;
 
     Eigen::Matrix2d r;
     double last_time;
