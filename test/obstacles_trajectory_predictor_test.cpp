@@ -4,6 +4,7 @@
 
 #include "obstacles_trajectory_predictor/obstacle.h"
 #include "obstacles_trajectory_predictor/social_force_model.h"
+#include "obstacles_trajectory_predictor/obstacles_tracker.h"
 
 TEST(TestSuite, test0)
 {
