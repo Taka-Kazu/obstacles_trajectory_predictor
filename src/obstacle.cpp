@@ -18,6 +18,8 @@ Obstacle::Obstacle(const Obstacle& obstacle)
     lifetime = obstacle.lifetime;
     age = obstacle.age;
     not_observed_time = obstacle.not_observed_time;
+    mass = obstacle.mass;
+    radius = obstacle.radius;
 }
 
 Obstacle::Obstacle(const Eigen::Vector2d& position)
@@ -106,30 +108,13 @@ void Obstacle::update(const Eigen::Vector2d& z)
     not_observed_time = 0;
 }
 
-void Obstacle::predict(void)
+void Obstacle::predict(const Eigen::Vector2d& force)
 {
     // std::cout << "predict" << std::endl;
     double current_time = ros::Time::now().toSec();
     double dt = current_time - last_time;
     last_time = current_time;
-    predict(dt);
-}
-
-void Obstacle::predict(double dt)
-{
-    // std::cout << "predict" << std::endl;
-    age += dt;
-    not_observed_time += dt;
-    // std::cout << "age: " << age << std::endl;
-    // std::cout << "not_observed_time: " << not_observed_time << std::endl;
-
-    Eigen::Vector2d force = Eigen::Vector2d::Zero();
-    x = get_next_state(x, force, dt);
-    Eigen::Matrix4d jf = get_jacobian_f(dt);
-    // std::cout << "X:\n" << x << std::endl;;
-    Eigen::Matrix4d q = get_state_transition_noise_matrix(dt);
-    p = jf * p * jf.transpose() + q;
-    // std::cout << "P:\n" << p << std::endl;;
+    predict(force, dt);
 }
 
 void Obstacle::predict(const Eigen::Vector2d& force, double dt)

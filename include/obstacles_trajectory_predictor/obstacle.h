@@ -16,9 +16,8 @@ public:
     Eigen::Matrix4d get_jacobian_f(double);
     Eigen::Matrix4d get_state_transition_noise_matrix(double);
     void update(const Eigen::Vector2d&);
-    void predict(void);
-    void predict(double);
     void predict(const Eigen::Vector2d&, double);
+    void predict(const Eigen::Vector2d&);
     Eigen::Vector2d get_position(void);
     Eigen::Vector2d get_velocity(void);
     double calculate_likelihood(void);
