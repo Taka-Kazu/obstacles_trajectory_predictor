@@ -254,3 +254,12 @@ std::vector<Eigen::Vector2d> ObstaclesTracker::get_positions(void)
     return positions;
 }
 
+
+std::vector<int> ObstaclesTracker::get_ids(void)
+{
+    std::vector<int> ids;
+    for(auto it=obstacles.begin();it!=obstacles.end();++it){
+        ids.push_back(it->first);
+    }
+    return ids;
+}

@@ -14,6 +14,8 @@ public:
     ObstaclesTrackerDemo(void);
 
     void obstacles_callback(const geometry_msgs::PoseArrayConstPtr&);
+    void publish_velocity_arrows(std_msgs::Header);
+    void publish_ids(std_msgs::Header);
     void process(void);
 
 private:
@@ -22,6 +24,7 @@ private:
     ros::NodeHandle nh;
     ros::NodeHandle local_nh;
     ros::Publisher velocity_arrows_pub;
+    ros::Publisher id_markers_pub;
     ros::Subscriber obstacles_sub;
 
     tf2_ros::Buffer tf_buffer;
@@ -34,6 +37,7 @@ ObstaclesTrackerDemo::ObstaclesTrackerDemo(void)
 :local_nh("~"), listener(tf_buffer)
 {
     velocity_arrows_pub = local_nh.advertise<visualization_msgs::MarkerArray>("velocity_arrows", 1);
+    id_markers_pub = local_nh.advertise<visualization_msgs::MarkerArray>("id_markers", 1);
     obstacles_sub = nh.subscribe("/dynamic_obstacles", 1, &ObstaclesTrackerDemo::obstacles_callback, this);
 
     local_nh.param<std::string>("FIXED_FRAME", FIXED_FRAME, {"odom"});
@@ -69,6 +73,12 @@ void ObstaclesTrackerDemo::obstacles_callback(const geometry_msgs::PoseArrayCons
     }
     tracker.set_obstacles_position(obstacles_position);
 
+    publish_velocity_arrows(msg->header);
+    publish_ids(msg->header);
+}
+
+void ObstaclesTrackerDemo::publish_velocity_arrows(std_msgs::Header header)
+{
     std::vector<Eigen::Vector2d> positions = tracker.get_positions();
     std::vector<Eigen::Vector2d> velocities = tracker.get_velocities();
 
@@ -77,10 +87,10 @@ void ObstaclesTrackerDemo::obstacles_callback(const geometry_msgs::PoseArrayCons
     visualization_msgs::MarkerArray velocity_arrows;
     for(int i=0;i<obs_num;i++){
         visualization_msgs::Marker v_arrow;
-        v_arrow.header.stamp = msg->header.stamp;
+        v_arrow.header.stamp = header.stamp;
         v_arrow.header.frame_id = FIXED_FRAME;
         v_arrow.id = i;
-        v_arrow.ns = "obstacles_tracker_demo";
+        v_arrow.ns = "obstacles_tracker_demo/velocity_arrows";
         v_arrow.type = visualization_msgs::Marker::ARROW;
         v_arrow.action = visualization_msgs::Marker::ADD;
         v_arrow.lifetime = ros::Duration();
@@ -99,12 +109,57 @@ void ObstaclesTrackerDemo::obstacles_callback(const geometry_msgs::PoseArrayCons
     for(int i=obs_num;i<last_obs_num;i++){
         visualization_msgs::Marker v_arrow;
         v_arrow.id = i;
-        v_arrow.ns = "obstacles_tracker_demo";
+        v_arrow.ns = "obstacles_tracker_demo/velocity_arrows";
         v_arrow.action = visualization_msgs::Marker::DELETE;
         v_arrow.pose.orientation = tf2::toMsg(tf2::Quaternion(0, 0, 0, 1));
         velocity_arrows.markers.push_back(v_arrow);
     }
     velocity_arrows_pub.publish(velocity_arrows);
+    last_obs_num = obs_num;
+}
+
+void ObstaclesTrackerDemo::publish_ids(std_msgs::Header header)
+{
+    std::vector<Eigen::Vector2d> positions = tracker.get_positions();
+    std::vector<Eigen::Vector2d> velocities = tracker.get_velocities();
+    std::vector<int> ids = tracker.get_ids();
+
+    static int last_obs_num = 0;
+    int obs_num = positions.size();
+    visualization_msgs::MarkerArray id_markers;
+    for(int i=0;i<obs_num;i++){
+        visualization_msgs::Marker id_marker;
+        id_marker.header.stamp = header.stamp;
+        id_marker.header.frame_id = FIXED_FRAME;
+        id_marker.id = i;
+        id_marker.ns = "obstacles_tracker_demo/id_markers";
+        id_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+        id_marker.action = visualization_msgs::Marker::ADD;
+        id_marker.lifetime = ros::Duration();
+        id_marker.pose.position.x = positions[i](0);
+        id_marker.pose.position.y = positions[i](1);
+        id_marker.pose.position.z = 2.0;
+        double direction = atan2(velocities[i](1), velocities[i](0));
+        tf2::Quaternion q;
+        q.setRPY(0, 0, direction);
+        id_marker.pose.orientation = tf2::toMsg(q);
+        id_marker.scale.z = 0.8;
+        id_marker.color.r = 1.0;
+        id_marker.color.g = 1.0;
+        id_marker.color.b = 1.0;
+        id_marker.color.a = 1.0;
+        id_marker.text = std::to_string(ids[i]);
+        id_markers.markers.push_back(id_marker);
+    }
+    for(int i=obs_num;i<last_obs_num;i++){
+        visualization_msgs::Marker id_marker;
+        id_marker.id = i;
+        id_marker.ns = "obstacles_tracker_demo/id_markers";
+        id_marker.action = visualization_msgs::Marker::DELETE;
+        id_marker.pose.orientation = tf2::toMsg(tf2::Quaternion(0, 0, 0, 1));
+        id_markers.markers.push_back(id_marker);
+    }
+    id_markers_pub.publish(id_markers);
     last_obs_num = obs_num;
 }
 
