@@ -50,7 +50,11 @@ Eigen::Vector2d SocialForceModel::get_social_force(size_t index)
         std::cout << "error: index out of range, index is " << index << ", size of agents is " << n_agents << std::endl;
     }
     Obstacle agent = agents[index];
-    return get_personal_motivation_force(agent) + get_interaction_force(index);
+    Eigen::Vector2d f_p = get_personal_motivation_force(agent);
+    Eigen::Vector2d f_i = get_interaction_force(index);
+    // std::cout << "f_p: " << f_p.transpose() << std::endl;
+    // std::cout << "f_i: " << f_i.transpose() << std::endl;
+    return f_p + f_i;
 }
 
 Eigen::Vector2d SocialForceModel::get_personal_motivation_force(Obstacle& agent)
@@ -60,8 +64,11 @@ Eigen::Vector2d SocialForceModel::get_personal_motivation_force(Obstacle& agent)
 
 Eigen::Vector2d SocialForceModel::get_interaction_force(size_t index)
 {
-    Eigen::Vector2d force = get_interaction_force_agents(index) + get_interaction_force_objects(index);
-    return force;
+    Eigen::Vector2d f_a = get_interaction_force_agents(index);
+    Eigen::Vector2d f_o = get_interaction_force_objects(index);
+    // std::cout << "f_a: " << f_a.transpose() << std::endl;
+    // std::cout << "f_o: " << f_o.transpose() << std::endl;
+    return f_a + f_o;
 }
 
 Eigen::Vector2d SocialForceModel::get_interaction_force_agents(size_t index)
@@ -69,6 +76,7 @@ Eigen::Vector2d SocialForceModel::get_interaction_force_agents(size_t index)
     size_t n_agents = agents.size();
     Obstacle agent = agents[index];
     Eigen::Vector2d intended_direction = get_intended_direction(agent);
+    // std::cout << "intended_direction : " << intended_direction.transpose() << std::endl;
     Eigen::Vector2d force = Eigen::Vector2d::Zero();
     for(size_t i=0;i<n_agents;i++){
         if(index == i){
@@ -79,6 +87,7 @@ Eigen::Vector2d SocialForceModel::get_interaction_force_agents(size_t index)
         double d = (agent.get_position() - agents[i].get_position()).norm();
         Eigen::Vector2d n = (agent.get_position() - agents[i].get_position()).normalized();
         force += MAGNITUDE_AGENT * exp((r - d) / FORCE_RANGE_AGENT) * n * (LAMBDA + (1 - LAMBDA) * (1 - n.dot(intended_direction)) * 0.5);
+        // std::cout << force.transpose() << std::endl;
     }
     return force;
 }
