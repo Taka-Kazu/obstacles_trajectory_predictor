@@ -2,7 +2,7 @@
 
 ObstaclesTracker::ObstaclesTracker(void)
 :SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(0.8)
-, NOT_OBSERVED_TIME_THRESHOLD(3.0), DEFAULT_LIFE_TIME(5.0)
+, NOT_OBSERVED_TIME_THRESHOLD(1.0), DEFAULT_LIFE_TIME(1.0)
 {
     obstacles.clear();
 }
@@ -48,7 +48,6 @@ void ObstaclesTracker::set_obstacles_position(const std::vector<Eigen::Vector2d>
             continue;
         }
         if((it->second.calculate_likelihood() > ERASE_LIKELIHOOD_THREHSOLD) && (it->second.not_observed_time < NOT_OBSERVED_TIME_THRESHOLD)){
-            it->second.lifetime = DEFAULT_LIFE_TIME;
             ++it;
         }else{
             if(it->second.lifetime > it->second.age){
