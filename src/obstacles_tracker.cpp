@@ -3,7 +3,7 @@
 ObstaclesTracker::ObstaclesTracker(void)
 :SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(0.8)
 , NOT_OBSERVED_TIME_THRESHOLD(1.0), DEFAULT_LIFE_TIME(1.0)
-, DT(0.1), VERBOSE(false)
+, DT(0.1), MOVING_THRESHOLD(0.3), VERBOSE(false)
 {
     obstacles.clear();
 }
@@ -258,6 +258,19 @@ std::vector<Obstacle> ObstaclesTracker::get_obstacles(const ObstaclesWithID& obs
 std::vector<Obstacle> ObstaclesTracker::get_obstacles(void)
 {
     return get_obstacles(obstacles);
+}
+
+std::vector<Obstacle> ObstaclesTracker::get_moving_obstacles(void)
+{
+    std::cout << "obstacles: " << obstacles.size() << std::endl;
+    std::vector<Obstacle> obstacles_;
+    for(const auto o : obstacles){
+        if(o.second.get_velocity().norm() > MOVING_THRESHOLD){
+            obstacles_.emplace_back(o.second);
+        }
+    }
+    std::cout << "moving obstacles: " << obstacles_.size() << std::endl;
+    return obstacles_;
 }
 
 std::vector<Eigen::Vector2d> ObstaclesTracker::get_velocities(void)

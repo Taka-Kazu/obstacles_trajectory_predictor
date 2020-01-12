@@ -20,6 +20,7 @@ public:
     std::vector<int> get_ids(void);
     std::vector<Obstacle> get_obstacles(const ObstaclesWithID&);
     std::vector<Obstacle> get_obstacles(void);
+    std::vector<Obstacle> get_moving_obstacles(void);
     std::vector<Obstacle> simulate_one_step(const std::vector<Obstacle>&);
     void set_verbose_output(bool);
 
@@ -36,6 +37,7 @@ private:
     double NOT_OBSERVED_TIME_THRESHOLD;
     double DEFAULT_LIFE_TIME;
     double DT;
+    double MOVING_THRESHOLD;
     bool VERBOSE;
 
     ObstaclesWithID obstacles;
