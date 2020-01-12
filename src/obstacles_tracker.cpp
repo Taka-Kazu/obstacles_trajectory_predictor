@@ -3,6 +3,7 @@
 ObstaclesTracker::ObstaclesTracker(void)
 :SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(0.8)
 , NOT_OBSERVED_TIME_THRESHOLD(1.0), DEFAULT_LIFE_TIME(1.0)
+, DT(0.1)
 {
     obstacles.clear();
 }
@@ -226,13 +227,18 @@ void ObstaclesTracker::update_tracking(const std::vector<Eigen::Vector2d>& obser
     }
 }
 
-std::vector<Obstacle> ObstaclesTracker::get_obstacles(const std::map<int, Obstacle>& obs)
+std::vector<Obstacle> ObstaclesTracker::get_obstacles(const ObstaclesWithID& obs)
 {
     std::vector<Obstacle> obstacles_;
     for(const auto o : obs){
         obstacles_.emplace_back(o.second);
     }
     return obstacles_;
+}
+
+std::vector<Obstacle> ObstaclesTracker::get_obstacles(void)
+{
+    return get_obstacles(obstacles);
 }
 
 std::vector<Eigen::Vector2d> ObstaclesTracker::get_velocities(void)
@@ -261,4 +267,25 @@ std::vector<int> ObstaclesTracker::get_ids(void)
         ids.push_back(it->first);
     }
     return ids;
+}
+
+std::vector<Obstacle> ObstaclesTracker::simulate_one_step(const std::vector<Obstacle>& obstacles_)
+{
+    std::vector<Obstacle> local_obstacles = obstacles_;
+    SocialForceModel sfm;
+    sfm.set_agents_states(local_obstacles);
+
+    auto it = local_obstacles.begin();
+    while(it != local_obstacles.end()){
+        // std::cout << "before prediction" << std::endl;
+        // std::cout << it->get_position().transpose() << std::endl;
+        // std::cout << it->get_velocity().transpose() << std::endl;
+        Eigen::Vector2d sf = sfm.get_social_force(std::distance(local_obstacles.begin(), it));
+        it->predict(sf, DT);
+        // std::cout << "after prediction" << std::endl;
+        // std::cout << it->get_position().transpose() << std::endl;
+        // std::cout << it->get_velocity().transpose() << std::endl;
+        ++it;
+    }
+    return local_obstacles;
 }

@@ -82,12 +82,12 @@ Eigen::Matrix4d Obstacle::get_state_transition_noise_matrix(double dt)
     return q;
 }
 
-Eigen::Vector2d Obstacle::get_position(void)
+Eigen::Vector2d Obstacle::get_position(void) const
 {
     return x.segment(0, 2);
 }
 
-Eigen::Vector2d Obstacle::get_velocity(void)
+Eigen::Vector2d Obstacle::get_velocity(void) const
 {
     return x.segment(2, 2);
 }

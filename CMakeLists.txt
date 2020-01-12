@@ -12,8 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED COMPONENTS system)
 
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES obstacles_trajectory_predictor
+    INCLUDE_DIRS include
+    LIBRARIES libobstacles_trajectory_predictor
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -24,12 +24,22 @@ include_directories(
     ${Eigen3_INCLUDE_DIRS}
 )
 
-add_executable(obstacles_tracker_demo src/demo.cpp src/obstacles_tracker.cpp src/obstacle.cpp src/social_force_model.cpp)
+add_library(libobstacles_trajectory_predictor
+    src/obstacles_trajectory_predictor.cpp
+    src/obstacles_tracker.cpp
+    src/obstacle.cpp
+    src/social_force_model.cpp
+)
+add_dependencies(libobstacles_trajectory_predictor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(libobstacles_trajectory_predictor
+    ${catkin_LIBRARIES}
+)
 
-add_dependencies(obstacles_tracker_demo ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(obstacles_tracker_demo
-  ${catkin_LIBRARIES}
+add_executable(obstacles_trajectory_predictor_demo src/demo.cpp)
+add_dependencies(obstacles_trajectory_predictor_demo ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(obstacles_trajectory_predictor_demo
+    ${catkin_LIBRARIES}
+    libobstacles_trajectory_predictor
 )
 
 if(CATKIN_ENABLE_TESTING)
@@ -37,12 +47,9 @@ if(CATKIN_ENABLE_TESTING)
     add_rostest_gtest(obstacles_trajectory_predictor_test
         test/obstacles_trajectory_predictor.test
         test/obstacles_trajectory_predictor_test.cpp
-        src/obstacle.cpp
-        src/kf.cpp
-        src/social_force_model.cpp
-        src/obstacles_tracker.cpp
     )
     target_link_libraries(obstacles_trajectory_predictor_test
+        libobstacles_trajectory_predictor
         ${catkin_LIBRARIES}
     )
 endif()

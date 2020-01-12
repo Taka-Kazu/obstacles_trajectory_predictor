@@ -18,8 +18,8 @@ public:
     void update(const Eigen::Vector2d&);
     void predict(const Eigen::Vector2d&, double);
     void predict(const Eigen::Vector2d&);
-    Eigen::Vector2d get_position(void);
-    Eigen::Vector2d get_velocity(void);
+    Eigen::Vector2d get_position(void) const;
+    Eigen::Vector2d get_velocity(void) const;
     double calculate_likelihood(void);
 
     Eigen::Vector4d x;// x, y, \dot{x}, \dot{y}
