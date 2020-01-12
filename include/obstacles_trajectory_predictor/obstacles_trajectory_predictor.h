@@ -9,6 +9,7 @@ public:
     ObstaclesTrajectoryPredictor(void);
 
     void set_obstacles_position(const std::vector<Eigen::Vector2d>&);
+    void set_static_obstacles_position(const std::vector<Eigen::Vector2d>&);
     std::vector<Eigen::Vector2d> get_velocities(void);
     std::vector<Eigen::Vector2d> get_positions(void);
     std::vector<int> get_ids(void);

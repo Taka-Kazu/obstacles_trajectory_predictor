@@ -1,10 +1,19 @@
 #include <ros/ros.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_eigen/tf2_eigen.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+
+#include <sensor_msgs/PointCloud2.h>
+#include <pcl_ros/transforms.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_types.h>
+#include <pcl/point_types_conversion.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include "obstacles_trajectory_predictor/obstacles_trajectory_predictor.h"
 
@@ -14,6 +23,7 @@ public:
     ObstaclesTrajectoryPredictorDemo(void);
 
     void obstacles_callback(const geometry_msgs::PoseArrayConstPtr&);
+    void cloud_callback(const sensor_msgs::PointCloud2ConstPtr&);
     void publish_velocity_arrows(std_msgs::Header);
     void publish_ids(std_msgs::Header);
     void simulate_and_publish(std_msgs::Header);
@@ -27,12 +37,15 @@ private:
     ros::Publisher velocity_arrows_pub;
     ros::Publisher id_markers_pub;
     ros::Publisher predicted_trajectories_pub;
+    ros::Publisher static_obstacles_pub;
     ros::Subscriber obstacles_sub;
+    ros::Subscriber cloud_sub;
 
     tf2_ros::Buffer tf_buffer;
     tf2_ros::TransformListener listener;
 
     ObstaclesTrajectoryPredictor obstacles_trajectory_predictor;
+    std::vector<Eigen::Vector2d> static_obstacles;
 };
 
 ObstaclesTrajectoryPredictorDemo::ObstaclesTrajectoryPredictorDemo(void)
@@ -41,7 +54,9 @@ ObstaclesTrajectoryPredictorDemo::ObstaclesTrajectoryPredictorDemo(void)
     velocity_arrows_pub = local_nh.advertise<visualization_msgs::MarkerArray>("velocity_arrows", 1);
     id_markers_pub = local_nh.advertise<visualization_msgs::MarkerArray>("id_markers", 1);
     predicted_trajectories_pub = local_nh.advertise<geometry_msgs::PoseArray>("predicted_trajectories", 1);
+    static_obstacles_pub = local_nh.advertise<sensor_msgs::PointCloud2>("static_obstacles", 1);
     obstacles_sub = nh.subscribe("/dynamic_obstacles", 1, &ObstaclesTrajectoryPredictorDemo::obstacles_callback, this);
+    cloud_sub = nh.subscribe("cloud/obstacle_removed", 1, &ObstaclesTrajectoryPredictorDemo::cloud_callback, this);
 
     local_nh.param<std::string>("FIXED_FRAME", FIXED_FRAME, {"odom"});
 }
@@ -76,6 +91,7 @@ void ObstaclesTrajectoryPredictorDemo::obstacles_callback(const geometry_msgs::P
         return;
     }
     obstacles_trajectory_predictor.set_obstacles_position(obstacles_position);
+    obstacles_trajectory_predictor.set_static_obstacles_position(static_obstacles);
 
     publish_velocity_arrows(msg->header);
     publish_ids(msg->header);
@@ -195,6 +211,45 @@ void ObstaclesTrajectoryPredictorDemo::process(void)
 {
     std::cout << "=== obstacles_trajectory_predictor_demo ===" << std::endl;
     ros::spin();
+}
+
+void ObstaclesTrajectoryPredictorDemo::cloud_callback(const sensor_msgs::PointCloud2ConstPtr& msg)
+{
+    std::cout << "--- cloud callback ---" << std::endl;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromROSMsg(*msg, *cloud_ptr);
+
+    for(auto& p : cloud_ptr->points){
+        p.z = 0.0;
+    }
+    std::cout << "before downsampling: " << cloud_ptr->points.size() << std::endl;
+    pcl::VoxelGrid<pcl::PointXYZ> vg;
+    vg.setInputCloud(cloud_ptr);
+    vg.setLeafSize(0.3, 0.3, 0.3);
+    vg.filter(*cloud_ptr);
+    std::cout << "after downsampling: " << cloud_ptr->points.size() << std::endl;
+
+    static_obstacles.clear();
+    std::string frame_id = msg->header.frame_id;
+    int slash_pos = frame_id.find('/');
+    if(slash_pos == 0){
+        frame_id.erase(0, 1);
+    }
+    try{
+        geometry_msgs::TransformStamped transform_stamped = tf_buffer.lookupTransform(FIXED_FRAME, frame_id, ros::Time(0));
+        Eigen::Matrix4d mat = tf2::transformToEigen(transform_stamped.transform).matrix().cast<double>();
+        pcl::transformPointCloud(*cloud_ptr, *cloud_ptr, mat);
+        cloud_ptr->header.frame_id = FIXED_FRAME;
+        static_obstacles_pub.publish(*cloud_ptr);
+
+        static_obstacles.reserve(cloud_ptr->points.size());
+        for(auto& p : cloud_ptr->points){
+            static_obstacles.push_back(Eigen::Vector2d(p.x, p.y));
+        }
+    }catch(tf2::TransformException& ex){
+        std::cout << ex.what() << std::endl;
+        return;
+    }
 }
 
 int main(int argc, char** argv)

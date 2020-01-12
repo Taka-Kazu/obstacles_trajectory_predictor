@@ -3,7 +3,7 @@
 ObstaclesTracker::ObstaclesTracker(void)
 :SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(0.8)
 , NOT_OBSERVED_TIME_THRESHOLD(1.0), DEFAULT_LIFE_TIME(1.0)
-, DT(0.1)
+, DT(0.1), VERBOSE(false)
 {
     obstacles.clear();
 }
@@ -31,20 +31,26 @@ void ObstaclesTracker::set_obstacles_position(const std::vector<Eigen::Vector2d>
     std::cout << "--- predict ---" << std::endl;
     auto it = obstacles.begin();
     while(it != obstacles.end()){
-        std::cout << "-\nobstacle id: " << it->first << std::endl;
-        std::cout << "before prediction" << std::endl;
-        std::cout << it->second.get_position().transpose() << std::endl;
-        std::cout << it->second.get_velocity().transpose() << std::endl;
+        if(VERBOSE){
+            std::cout << "-\nobstacle id: " << it->first << std::endl;
+            std::cout << "before prediction" << std::endl;
+            std::cout << it->second.get_position().transpose() << std::endl;
+            std::cout << it->second.get_velocity().transpose() << std::endl;
+        }
         Eigen::Vector2d sf = sfm.get_social_force(std::distance(obstacles.begin(), it));
         it->second.predict(sf);
-        std::cout << "after prediction" << std::endl;
-        std::cout << it->second.get_position().transpose() << std::endl;
-        std::cout << it->second.get_velocity().transpose() << std::endl;
-        std::cout << "not observed: " << it->second.not_observed_time << std::endl;
-        std::cout << "age: " << it->second.age << std::endl;
-        std::cout << "likelihood: " << it->second.calculate_likelihood() << std::endl;
+        if(VERBOSE){
+            std::cout << "after prediction" << std::endl;
+            std::cout << it->second.get_position().transpose() << std::endl;
+            std::cout << it->second.get_velocity().transpose() << std::endl;
+            std::cout << "not observed: " << it->second.not_observed_time << std::endl;
+            std::cout << "age: " << it->second.age << std::endl;
+            std::cout << "likelihood: " << it->second.calculate_likelihood() << std::endl;
+        }
         if(it->second.age < 0.0){
-            std::cout << "\033[31mobstacle " << it->first << " was erased\033[0m" << std::endl;
+            if(VERBOSE){
+                std::cout << "\033[31mobstacle " << it->first << " was erased\033[0m" << std::endl;
+            }
             it = obstacles.erase(it);
             continue;
         }
@@ -53,25 +59,36 @@ void ObstaclesTracker::set_obstacles_position(const std::vector<Eigen::Vector2d>
         }else{
             if(it->second.lifetime > it->second.age){
                 ++it;
-                std::cout << "\033[33mthe likelihood of this obstacle is small but is not old enough to be erased\033[0m" << std::endl;
+                if(VERBOSE){
+                    std::cout << "\033[33mthe likelihood of this obstacle is small but is not old enough to be erased\033[0m" << std::endl;
+                }
             }else{
-                std::cout << "\033[31mobstacle " << it->first << " was erased\033[0m" << std::endl;
+                if(VERBOSE){
+                    std::cout << "\033[31mobstacle " << it->first << " was erased\033[0m" << std::endl;
+                }
                 it = obstacles.erase(it);
             }
         }
     }
 }
 
+void ObstaclesTracker::set_static_obstacles_position(const std::vector<Eigen::Vector2d>& static_obstacles_position)
+{
+    static_obstacles = static_obstacles_position;
+}
+
 bool ObstaclesTracker::associate_obstacles(const std::vector<Eigen::Vector2d>& observed_obstacles, std::vector<int>& association_candidates)
 {
     std::cout << "--- associate obstacles ---" << std::endl;
-    std::cout << "tracking obstacles:" << std::endl;
-    for(const auto& to : obstacles){
-        std::cout << to.second.x.segment(0, 2).transpose() << std::endl;
-    }
-    std::cout << "observed obstacles:" << std::endl;
-    for(const auto& oo : observed_obstacles){
-        std::cout << oo.transpose() << std::endl;
+    if(VERBOSE){
+        std::cout << "tracking obstacles:" << std::endl;
+        for(const auto& to : obstacles){
+            std::cout << to.second.x.segment(0, 2).transpose() << std::endl;
+        }
+        std::cout << "observed obstacles:" << std::endl;
+        for(const auto& oo : observed_obstacles){
+            std::cout << oo.transpose() << std::endl;
+        }
     }
     int cluster_num = obstacles.size();
     int observed_obstacles_num = observed_obstacles.size();
@@ -95,7 +112,9 @@ bool ObstaclesTracker::associate_obstacles(const std::vector<Eigen::Vector2d>& o
             }
         }
     }
-    std::cout << "association matrix:\n" << association_matrix << std::endl;
+    if(VERBOSE){
+        std::cout << "association matrix:\n" << association_matrix << std::endl;
+    }
     return solve_hungarian_method(association_matrix, association_candidates);
 }
 
@@ -274,6 +293,7 @@ std::vector<Obstacle> ObstaclesTracker::simulate_one_step(const std::vector<Obst
     std::vector<Obstacle> local_obstacles = obstacles_;
     SocialForceModel sfm;
     sfm.set_agents_states(local_obstacles);
+    sfm.set_objects(static_obstacles);
 
     auto it = local_obstacles.begin();
     while(it != local_obstacles.end()){
@@ -288,4 +308,9 @@ std::vector<Obstacle> ObstaclesTracker::simulate_one_step(const std::vector<Obst
         ++it;
     }
     return local_obstacles;
+}
+
+void ObstaclesTracker::set_verbose_output(bool verbose)
+{
+    VERBOSE = verbose;
 }

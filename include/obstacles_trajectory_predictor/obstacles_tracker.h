@@ -14,12 +14,14 @@ public:
     ObstaclesTracker(void);
 
     void set_obstacles_position(const std::vector<Eigen::Vector2d>&);
+    void set_static_obstacles_position(const std::vector<Eigen::Vector2d>&);
     std::vector<Eigen::Vector2d> get_velocities(void);
     std::vector<Eigen::Vector2d> get_positions(void);
     std::vector<int> get_ids(void);
     std::vector<Obstacle> get_obstacles(const ObstaclesWithID&);
     std::vector<Obstacle> get_obstacles(void);
     std::vector<Obstacle> simulate_one_step(const std::vector<Obstacle>&);
+    void set_verbose_output(bool);
 
 private:
     bool associate_obstacles(const std::vector<Eigen::Vector2d>&, std::vector<int>&);
@@ -34,8 +36,10 @@ private:
     double NOT_OBSERVED_TIME_THRESHOLD;
     double DEFAULT_LIFE_TIME;
     double DT;
+    bool VERBOSE;
 
     ObstaclesWithID obstacles;
+    std::vector<Eigen::Vector2d> static_obstacles;
 };
 
 #endif// __OBSTACLES_TRACKER_H

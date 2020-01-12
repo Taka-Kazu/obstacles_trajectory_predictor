@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Eigen3 REQUIRED COMPONENTS system)
+find_package(PCL 1.8 REQUIRED)
 
 catkin_package(
     INCLUDE_DIRS include
@@ -22,7 +23,11 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${Eigen3_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
 )
+
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 add_library(libobstacles_trajectory_predictor
     src/obstacles_trajectory_predictor.cpp
@@ -39,6 +44,7 @@ add_executable(obstacles_trajectory_predictor_demo src/demo.cpp)
 add_dependencies(obstacles_trajectory_predictor_demo ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(obstacles_trajectory_predictor_demo
     ${catkin_LIBRARIES}
+    ${PCL_LIBRARIES}
     libobstacles_trajectory_predictor
 )
 

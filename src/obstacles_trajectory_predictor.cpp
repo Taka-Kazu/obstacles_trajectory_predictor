@@ -10,6 +10,11 @@ void ObstaclesTrajectoryPredictor::set_obstacles_position(const std::vector<Eige
     tracker.set_obstacles_position(obstacles_position);
 }
 
+void ObstaclesTrajectoryPredictor::set_static_obstacles_position(const std::vector<Eigen::Vector2d>& static_obstacles_position)
+{
+    tracker.set_static_obstacles_position(static_obstacles_position);
+}
+
 std::vector<Eigen::Vector2d> ObstaclesTrajectoryPredictor::get_velocities(void)
 {
     return tracker.get_velocities();

@@ -9,7 +9,7 @@ SocialForceModel::SocialForceModel(void)
     MAGNITUDE_AGENT = 70;
     FORCE_RANGE_AGENT = 0.4;
     MAGNITUDE_OBJECT = 100;
-    FORCE_RANGE_OBJECT = 0.01;
+    FORCE_RANGE_OBJECT = 0.1;
 }
 
 void SocialForceModel::set_agents_states(const std::vector<Obstacle>& agents_)
@@ -22,6 +22,7 @@ void SocialForceModel::set_objects(const std::vector<Eigen::Vector2d>& objects_)
 {
     objects.clear();
     objects = objects_;
+    // std::cout << objects.size() << " static obstacles was set" << std::endl;
 }
 
 Eigen::Vector2d SocialForceModel::get_virtual_goal(Obstacle& agent)
@@ -94,7 +95,6 @@ Eigen::Vector2d SocialForceModel::get_interaction_force_agents(size_t index)
 
 Eigen::Vector2d SocialForceModel::get_interaction_force_objects(size_t index)
 {
-    // unimplemented
     size_t n_objects = objects.size();
     Obstacle agent = agents[index];
     Eigen::Vector2d intended_direction = get_intended_direction(agent);
