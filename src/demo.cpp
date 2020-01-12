@@ -16,6 +16,7 @@ public:
     void obstacles_callback(const geometry_msgs::PoseArrayConstPtr&);
     void publish_velocity_arrows(std_msgs::Header);
     void publish_ids(std_msgs::Header);
+    void simulate_and_publish(std_msgs::Header);
     void process(void);
 
 private:
@@ -79,23 +80,7 @@ void ObstaclesTrajectoryPredictorDemo::obstacles_callback(const geometry_msgs::P
     publish_velocity_arrows(msg->header);
     publish_ids(msg->header);
     std::cout << "tracking time: " << ros::Time::now().toSec() - start << "[s]" << std::endl;;
-    std::vector<std::vector<Obstacle> > predicted_obstacles_states = obstacles_trajectory_predictor.simulate(35);
-    geometry_msgs::PoseArray predicted_trajectories;
-    predicted_trajectories.header.stamp = msg->header.stamp;
-    predicted_trajectories.header.frame_id = FIXED_FRAME;
-    for(const auto& o : predicted_obstacles_states){
-        for(const auto& o_t : o){
-            geometry_msgs::Pose p;
-            p.position.x = o_t.get_position()(0);
-            p.position.y = o_t.get_position()(1);
-            double direction = atan2(o_t.get_velocity()(1), o_t.get_velocity()(0));
-            tf2::Quaternion q;
-            q.setRPY(0, 0, direction);
-            p.orientation = tf2::toMsg(q);
-            predicted_trajectories.poses.push_back(p);
-        }
-    }
-    predicted_trajectories_pub.publish(predicted_trajectories);
+    simulate_and_publish(msg->header);
     std::cout << "time: " << ros::Time::now().toSec() - start << "[s]" << std::endl;;
 }
 
@@ -183,6 +168,27 @@ void ObstaclesTrajectoryPredictorDemo::publish_ids(std_msgs::Header header)
     }
     id_markers_pub.publish(id_markers);
     last_obs_num = obs_num;
+}
+
+void ObstaclesTrajectoryPredictorDemo::simulate_and_publish(std_msgs::Header header)
+{
+    std::vector<std::vector<Obstacle> > predicted_obstacles_states = obstacles_trajectory_predictor.simulate(35);
+    geometry_msgs::PoseArray predicted_trajectories;
+    predicted_trajectories.header.stamp = header.stamp;
+    predicted_trajectories.header.frame_id = FIXED_FRAME;
+    for(const auto& o : predicted_obstacles_states){
+        for(const auto& o_t : o){
+            geometry_msgs::Pose p;
+            p.position.x = o_t.get_position()(0);
+            p.position.y = o_t.get_position()(1);
+            double direction = atan2(o_t.get_velocity()(1), o_t.get_velocity()(0));
+            tf2::Quaternion q;
+            q.setRPY(0, 0, direction);
+            p.orientation = tf2::toMsg(q);
+            predicted_trajectories.poses.push_back(p);
+        }
+    }
+    predicted_trajectories_pub.publish(predicted_trajectories);
 }
 
 void ObstaclesTrajectoryPredictorDemo::process(void)
