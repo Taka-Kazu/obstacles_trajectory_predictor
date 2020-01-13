@@ -15,6 +15,7 @@ public:
 
     void set_obstacles_position(const std::vector<Eigen::Vector2d>&);
     void set_static_obstacles_position(const std::vector<Eigen::Vector2d>&);
+    void setup_simulation(const std::vector<Obstacle>&);
     std::vector<Eigen::Vector2d> get_velocities(void);
     std::vector<Eigen::Vector2d> get_positions(void);
     std::vector<int> get_ids(void);
@@ -38,10 +39,13 @@ private:
     double DEFAULT_LIFE_TIME;
     double DT;
     double MOVING_THRESHOLD;
+    double MAX_SOCIAL_FORCE_THREHOLD;// too much force may be due to misrecognition
     bool VERBOSE;
 
     ObstaclesWithID obstacles;
     std::vector<Eigen::Vector2d> static_obstacles;
+    std::vector<size_t> misrecognition_ids;
+    SocialForceModel sfm;
 };
 
 #endif// __OBSTACLES_TRACKER_H

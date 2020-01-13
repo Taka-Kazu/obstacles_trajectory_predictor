@@ -33,6 +33,8 @@ std::vector<int> ObstaclesTrajectoryPredictor::get_ids(void)
 std::vector<std::vector<Obstacle> > ObstaclesTrajectoryPredictor::simulate(int simulation_step)
 {
     auto obstacles = tracker.get_moving_obstacles();
+    tracker.setup_simulation(obstacles);
+
     int obstacles_num = obstacles.size();
     std::cout << "simulate " << obstacles_num << " obstacles for " << simulation_step << " steps" << std::endl;
     std::vector<std::vector<Obstacle> > obstacles_predicted_states(obstacles_num, std::vector<Obstacle>(simulation_step + 1));

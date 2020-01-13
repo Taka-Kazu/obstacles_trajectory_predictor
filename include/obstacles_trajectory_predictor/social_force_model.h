@@ -14,13 +14,14 @@ class SocialForceModel
 public:
     SocialForceModel(void);
 
-    void set_agents_states(const std::vector<Obstacle>&);
+    void set_agents_state(const std::vector<Obstacle>&);
+    void set_observed_agents_state(const std::vector<Obstacle>&);
     void set_objects(const std::vector<Eigen::Vector2d>&);
-    Eigen::Vector2d get_virtual_goal(Obstacle&);
-    Eigen::Vector2d get_intended_direction(Obstacle&);
-    Eigen::Vector2d get_intended_velocity_vector(Obstacle&);
+    Eigen::Vector2d get_virtual_goal(const Obstacle&);
+    Eigen::Vector2d get_intended_direction(size_t);
+    Eigen::Vector2d get_intended_velocity_vector(size_t);
     Eigen::Vector2d get_social_force(size_t);
-    Eigen::Vector2d get_personal_motivation_force(Obstacle&);
+    Eigen::Vector2d get_personal_motivation_force(size_t);
     Eigen::Vector2d get_interaction_force(size_t);
     Eigen::Vector2d get_interaction_force_agents(size_t);
     Eigen::Vector2d get_interaction_force_objects(size_t);
@@ -36,6 +37,7 @@ private:
     double FORCE_RANGE_OBJECT;// [N]
 
     std::vector<Obstacle> agents;
+    std::vector<Eigen::Vector2d> virtual_goals;
     std::vector<Eigen::Vector2d> objects;
 };
 

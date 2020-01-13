@@ -1,9 +1,10 @@
 #include "obstacles_trajectory_predictor/obstacles_tracker.h"
 
 ObstaclesTracker::ObstaclesTracker(void)
-:SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(0.8)
+:SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(100)
 , NOT_OBSERVED_TIME_THRESHOLD(1.0), DEFAULT_LIFE_TIME(1.0)
-, DT(0.1), MOVING_THRESHOLD(0.3), VERBOSE(false)
+, DT(0.1), MOVING_THRESHOLD(0.3), MAX_SOCIAL_FORCE_THREHOLD(10)
+, VERBOSE(false)
 {
     obstacles.clear();
 }
@@ -25,11 +26,11 @@ void ObstaclesTracker::set_obstacles_position(const std::vector<Eigen::Vector2d>
 
     update_tracking(observed_obstacles, association_candidates);
 
-    SocialForceModel sfm;
-    sfm.set_agents_states(get_obstacles(obstacles));
+    sfm.set_observed_agents_state(get_obstacles(obstacles));
 
     std::cout << "--- predict ---" << std::endl;
     auto it = obstacles.begin();
+    misrecognition_ids.clear();
     while(it != obstacles.end()){
         if(VERBOSE){
             std::cout << "-\nobstacle id: " << it->first << std::endl;
@@ -38,6 +39,18 @@ void ObstaclesTracker::set_obstacles_position(const std::vector<Eigen::Vector2d>
             std::cout << it->second.get_velocity().transpose() << std::endl;
         }
         Eigen::Vector2d sf = sfm.get_social_force(std::distance(obstacles.begin(), it));
+        if(VERBOSE){
+            std::cout << "force: " << sf.transpose() << std::endl;
+        }
+        if(MAX_SOCIAL_FORCE_THREHOLD < sf.norm()){
+            if((it->second.age < it->second.lifetime * 5)
+               || (it->second.calculate_likelihood() < ERASE_LIKELIHOOD_THREHSOLD)){
+                if(VERBOSE){
+                    std::cout << "maybe misrecognition" << std::endl;
+                }
+                misrecognition_ids.emplace_back(it->first);
+            }
+        }
         it->second.predict(sf);
         if(VERBOSE){
             std::cout << "after prediction" << std::endl;
@@ -75,6 +88,11 @@ void ObstaclesTracker::set_obstacles_position(const std::vector<Eigen::Vector2d>
 void ObstaclesTracker::set_static_obstacles_position(const std::vector<Eigen::Vector2d>& static_obstacles_position)
 {
     static_obstacles = static_obstacles_position;
+}
+
+void ObstaclesTracker::setup_simulation(const std::vector<Obstacle>& agents)
+{
+    sfm.set_observed_agents_state(agents);
 }
 
 bool ObstaclesTracker::associate_obstacles(const std::vector<Eigen::Vector2d>& observed_obstacles, std::vector<int>& association_candidates)
@@ -266,7 +284,9 @@ std::vector<Obstacle> ObstaclesTracker::get_moving_obstacles(void)
     std::vector<Obstacle> obstacles_;
     for(const auto o : obstacles){
         if(o.second.get_velocity().norm() > MOVING_THRESHOLD){
-            obstacles_.emplace_back(o.second);
+            if(std::find(misrecognition_ids.begin(), misrecognition_ids.end(), o.first) == misrecognition_ids.end()){
+                obstacles_.emplace_back(o.second);
+            }
         }
     }
     std::cout << "moving obstacles: " << obstacles_.size() << std::endl;
@@ -304,8 +324,7 @@ std::vector<int> ObstaclesTracker::get_ids(void)
 std::vector<Obstacle> ObstaclesTracker::simulate_one_step(const std::vector<Obstacle>& obstacles_)
 {
     std::vector<Obstacle> local_obstacles = obstacles_;
-    SocialForceModel sfm;
-    sfm.set_agents_states(local_obstacles);
+    sfm.set_agents_state(local_obstacles);
     sfm.set_objects(static_obstacles);
 
     auto it = local_obstacles.begin();
