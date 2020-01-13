@@ -53,7 +53,7 @@ TEST(TestSuite, test3)
     agents.push_back(Obstacle(Eigen::Vector2d(0, 0)));
     agents.push_back(Obstacle(Eigen::Vector2d(0, 1)));
     agents.push_back(Obstacle(Eigen::Vector2d(5, -1)));
-    sfm.set_agents_states(agents);
+    sfm.set_observed_agents_state(agents);
     std::vector<Eigen::Vector2d> forces;
     for(size_t i=0;i<agents.size();i++){
         Eigen::Vector2d f = sfm.get_social_force(i);
