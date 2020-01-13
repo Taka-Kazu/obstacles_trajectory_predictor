@@ -24,13 +24,13 @@ public:
     std::vector<Obstacle> get_moving_obstacles(void);
     std::vector<Obstacle> simulate_one_step(const std::vector<Obstacle>&);
     void set_verbose_output(bool);
+    bool solve_hungarian_method(Eigen::MatrixXi&, std::vector<int>&);
 
 private:
     bool associate_obstacles(const std::vector<Eigen::Vector2d>&, std::vector<int>&);
     double get_distance(const Obstacle&, const Eigen::Vector2d&);
     int get_id_from_index(int);
     int get_new_id(void);
-    bool solve_hungarian_method(Eigen::MatrixXi&, std::vector<int>&);
     void update_tracking(const std::vector<Eigen::Vector2d>&, const std::vector<int>&);
 
     double SAME_OBSTACLE_THRESHOLD;

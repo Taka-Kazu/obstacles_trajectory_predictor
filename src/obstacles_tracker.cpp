@@ -182,6 +182,10 @@ int ObstaclesTracker::get_new_id(void)
 bool ObstaclesTracker::solve_hungarian_method(Eigen::MatrixXi& matrix, std::vector<int>& association_candidates)
 {
     // reference: http://www.prefield.com/algorithm/math/hungarian.html
+    const bool DEBUG = false;
+    if(DEBUG){
+        std::cout << "mat:\n" << matrix << std::endl;
+    }
     const double inf = 1e6;
     int n = matrix.rows(), p, q;
     std::vector<int> fx(n, inf), fy(n, 0);
@@ -191,10 +195,33 @@ bool ObstaclesTracker::solve_hungarian_method(Eigen::MatrixXi& matrix, std::vect
             fx[i] = std::min(fx[i], matrix(i, j));
         }
     }
-    const int MAX_ITERATION = 100;
+    const int MAX_ITERATION = 20;
     int count = 0;
     for(int i = 0;i < n;){
-        // std::cout << "count: " << count << std::endl;
+        if(DEBUG){
+            std::cout << "count: " << count << std::endl;
+            std::cout << "i: " << i << std::endl;
+            std::cout << "x:" << std::endl;
+            for(auto x_ : x){
+                std::cout << x_ << ", ";
+            }
+            std::cout << std::endl;
+            std::cout << "y:" << std::endl;
+            for(auto y_ : y){
+                std::cout << y_ << ", ";
+            }
+            std::cout << std::endl;
+            std::cout << "fx:" << std::endl;
+            for(auto fx_ : fx){
+                std::cout << fx_ << ", ";
+            }
+            std::cout << std::endl;
+            std::cout << "fy:" << std::endl;
+            for(auto fy_ : fy){
+                std::cout << fy_ << ", ";
+            }
+            std::cout << std::endl;
+        }
         if(count > MAX_ITERATION){
             std::cout << "\033[31mafter " << MAX_ITERATION << " times loop,  break!!!!!\033[0m" << std::endl;
             return false;
@@ -215,12 +242,20 @@ bool ObstaclesTracker::solve_hungarian_method(Eigen::MatrixXi& matrix, std::vect
                 }
             }
         }
+        if(DEBUG){
+            std::cout << "t:" << std::endl;
+            for(auto t_ : t){
+                std::cout << t_ << ", ";
+            }
+            std::cout << std::endl;
+            std::cout << "p, q: " << p << ", " << q << std::endl;
+        }
         if(x[i] < 0){
             int d = inf;
             for(int k = 0;k <= q;++k){
                 for(int j = 0;j < n;++j){
                     if(t[j] < 0){
-                        d = std::max(d, fx[s[k]] + fy[j] - matrix(s[k], j));
+                        d = std::min(d, fx[s[k]] + fy[j] - matrix(s[k], j));
                     }
                 }
                 for(int j = 0;j < n;++j){
@@ -235,12 +270,16 @@ bool ObstaclesTracker::solve_hungarian_method(Eigen::MatrixXi& matrix, std::vect
         }
         count++;
     }
-    // std::cout << "candidates: " << std::endl;
+    if(DEBUG){
+        std::cout << "candidates: " << std::endl;
+    }
     association_candidates.resize(n);
     for(int i = 0;i < n;++i){
+        if(DEBUG){
+            std::cout << i << ": " << association_candidates[i] << std::endl;
+            std::cout << "index: " << y[i] << std::endl;
+        }
         association_candidates[i] = get_id_from_index(y[i]);
-        // std::cout << i << ": " << candidates[i] << std::endl;
-        // std::cout << "index: " << y[i] << std::endl;
     }
     return true;
 }

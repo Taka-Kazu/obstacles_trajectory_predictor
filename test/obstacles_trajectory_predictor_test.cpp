@@ -64,6 +64,28 @@ TEST(TestSuite, test3)
     EXPECT_LT(0, forces[1](1));
 }
 
+TEST(TestSuite, test4)
+{
+    ObstaclesTracker tracker;
+    Eigen::MatrixXi mat(3, 3);
+    mat <<   0, 100, 100,
+            11,   0, 100,
+           100, 100, 100;
+    std::vector<int> candidates;
+    EXPECT_TRUE(tracker.solve_hungarian_method(mat, candidates));
+}
+
+TEST(TestSuite, test5)
+{
+    ObstaclesTracker tracker;
+    Eigen::MatrixXi mat(3, 3);
+    mat <<   0, 100, 100,
+            11, 100, 100,
+           100, 100, 100;
+    std::vector<int> candidates;
+    EXPECT_TRUE(tracker.solve_hungarian_method(mat, candidates));
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
