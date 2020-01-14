@@ -2,7 +2,7 @@
 
 ObstaclesTrajectoryPredictor::ObstaclesTrajectoryPredictor(void)
 {
-
+    tracker.set_verbose_output(false);
 }
 
 void ObstaclesTrajectoryPredictor::set_obstacles_position(const std::vector<Eigen::Vector2d>& obstacles_position)

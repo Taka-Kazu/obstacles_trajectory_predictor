@@ -1,7 +1,7 @@
 #include "obstacles_trajectory_predictor/obstacles_tracker.h"
 
 ObstaclesTracker::ObstaclesTracker(void)
-:SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(100)
+:SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(50)
 , NOT_OBSERVED_TIME_THRESHOLD(1.0), DEFAULT_LIFE_TIME(1.0)
 , DT(0.1), MOVING_THRESHOLD(0.3), MAX_SOCIAL_FORCE_THREHOLD(10)
 , VERBOSE(false)
@@ -195,7 +195,7 @@ bool ObstaclesTracker::solve_hungarian_method(Eigen::MatrixXi& matrix, std::vect
             fx[i] = std::min(fx[i], matrix(i, j));
         }
     }
-    const int MAX_ITERATION = 20;
+    const int MAX_ITERATION = 100;
     int count = 0;
     for(int i = 0;i < n;){
         if(DEBUG){

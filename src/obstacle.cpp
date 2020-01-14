@@ -39,8 +39,8 @@ void Obstacle::initialize(void)
     h << 1.0, 0.0, 0.0, 0.0,
          0.0, 1.0, 0.0, 0.0;
 
-    r << 1e-4,  0.0,
-          0.0, 1e-4;
+    r << 1e-3,  0.0,
+          0.0, 1e-3;
 
     last_time = ros::Time::now().toSec();
     likelihood = 1.0;
